@@ -21,9 +21,10 @@ from db import engine
 import aioredis
 from pydantic import BaseModel
 
+
 app = FastAPI(title="AW Botnet Archive",
         description="made with <3 and maintained by green",
-        version="0.0.2")
+        version="0.0.3")
 
 origins = [
     "*"
@@ -181,7 +182,7 @@ async def check_wallet(wallet:str):
 
 @app.get("/list", response_model=BlacklistGetListResponse)
 @cache(expire=5)
-async def get_list():
+async def get_paginated_list_of_blacklisted_wallets(reason: str = None, limit: int = 1000, offset: int = 0):
     perf = time.time()
 
     response = {
@@ -190,7 +191,12 @@ async def get_list():
     with Session(engine) as session:
         
         statement = select(Blacklist)
-        results = session.exec(statement).all()
+        if reason:
+            statement = statement.where(Blacklist.reason.contains(reason))
+        if limit > 10000:
+            limit = 10000
+
+        results = session.exec(statement.offset(offset).limit(limit)).all()
         response["data"] = results
 
     response["query_time"] = time.time()-perf
