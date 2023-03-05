@@ -196,7 +196,7 @@ async def get_paginated_list_of_blacklisted_wallets(reason: str = None, limit: i
         if limit > 10000:
             limit = 10000
 
-        results = session.exec(statement.offset(offset).limit(limit)).all()
+        results = session.exec(statement.order_by("id").offset(offset).limit(limit)).all()
         response["data"] = results
 
     response["query_time"] = time.time()-perf
